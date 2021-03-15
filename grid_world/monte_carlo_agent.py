@@ -7,7 +7,6 @@ import time
 # Optimal Q Table found after training
 from q_tables import monte_carlo_table as q_table
 q_table = np.array(q_table)
-print(q_table)
 
 class MonteCarloAgent:
   def __init__(self, env, state_dict, state_space_size, action_space_size):
@@ -106,6 +105,7 @@ class MonteCarloAgent:
     return (x, y, direction, reward)
 
   def getPolicyFromStateValueFunction(self,V):
+    discount_rate = 0.99
     # Policy is represented as a Q-Table
     q_table = np.zeros((self.state_space_size, self.action_space_size))
     # Go through each state
@@ -116,7 +116,7 @@ class MonteCarloAgent:
         x, y, direction, reward = self.getNewStateAndRewardFromAction(state, action)
         new_state = (x,y,direction)
         new_state_value = V[new_state]
-        q_table[i][action] = new_state_value
+        q_table[i][action] = reward + discount_rate * new_state_value
     return q_table
 
   def getState(self):
