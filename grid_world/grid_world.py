@@ -2,8 +2,8 @@ import gym
 import gym_minigrid
 import numpy as np
 import random
-
 from q_learning_agent import QLearningAgent
+from monte_carlo_agent import MonteCarloAgent
 
 # Actions
 # 0 - Rotate Left
@@ -68,6 +68,12 @@ state_space_size = 36
 max_steps_per_episode = 100
 discount_rate = 0.99
 
-ql_agent = QLearningAgent(env, state_dict, state_space_size, action_space_size,)
+# Uncomment the agent to test or train
+
+# ql_agent = QLearningAgent(env, state_dict, state_space_size, action_space_size,)
 # ql_agent.train()
-ql_agent.test()
+# ql_agent.test()
+
+mc_agent = MonteCarloAgent(env, state_dict, state_space_size, action_space_size)
+# mc_agent.train()
+mc_agent.test()

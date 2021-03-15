@@ -3,7 +3,7 @@ import random
 import time
 from tqdm import tqdm
 # Optimal Q Table found after training
-from q_table import q_table
+from q_tables import q_learning_table as q_table
 q_table = np.array(q_table)
 
 class QLearningAgent:
