@@ -7,7 +7,6 @@ import time
 # Optimal Q Table found after training
 from q_tables import value_iteration_table_three as q_table
 q_table = np.array(q_table)
-print(q_table)
 
 class ValueIterationAgent:
   def __init__(self, env, state_dict, state_space_size, action_space_size):
@@ -18,12 +17,12 @@ class ValueIterationAgent:
 
 
   def train(self):
-    discount_rate = 0.99
+    discount_rate = 0.6
     # Default states with random values between 0 and 1
-    V = {key: random.uniform(0,1) for key in self.state_dict.keys()}
+    V = {key: 0 for key in self.state_dict.keys()}
     # Set terminal state to have a value of 0
-    for i in range(4):
-      V[(3,3,i)] = 0
+    # for i in range(4):
+    #   V[(3,3,i)] = 0
     biggest_deltas = []
 
     # Repeat until convergence

@@ -2,9 +2,10 @@ import gym
 import gym_minigrid
 import numpy as np
 import random
-from q_learning_agent import QLearningAgent
 from monte_carlo_agent import MonteCarloAgent
 from value_iteration_agent import ValueIterationAgent
+from temporal_difference_agent import TemporalDifferenceAgent
+from multiprocessing import Pool
 
 # Actions
 # 0 - Rotate Left
@@ -66,14 +67,8 @@ state_dict = {
 env = gym.make('MiniGrid-Empty-5x5-v0') # Really a 3x3
 action_space_size = 3
 state_space_size = 36
-max_steps_per_episode = 100
-discount_rate = 0.99
 
 # Uncomment the agent to test or train
-
-# ql_agent = QLearningAgent(env, state_dict, state_space_size, action_space_size,)
-# ql_agent.train()
-# ql_agent.test()
 
 # mc_agent = MonteCarloAgent(env, state_dict, state_space_size, action_space_size)
 # mc_agent.train()
@@ -82,3 +77,20 @@ discount_rate = 0.99
 # vi_agent = ValueIterationAgent(env, state_dict, state_space_size, action_space_size)
 # vi_agent.train()
 # vi_agent.test()
+
+td_agent = TemporalDifferenceAgent(env, state_dict, state_space_size, action_space_size)
+# td_agent.train_q_learning()
+# td_agent.train_td0()
+# td_agent.test_q_learning()
+# td_agent.test_td0()
+
+# value_choices = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+# parameters = []
+# process_number = 1
+# for discount_factor in value_choices:
+#   for learning_rate in value_choices:
+#     parameters.append([discount_factor, learning_rate, process_number])
+#     process_number += 1
+
+# pool = Pool(processes=len(parameters))
+# pool.map(td_agent.train_td0, parameters)
