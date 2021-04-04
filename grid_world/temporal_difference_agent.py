@@ -290,6 +290,100 @@ class TemporalDifferenceAgent:
     print("\n\n********Q-table 2********\n")
     print(q_table_two)
 
+  def train_n_step_td(self, n):
+    # num_episodes = 10000
+    # discount_factor = 0.1
+    # learning_rate = 0.1
+    # # Holds the returns for every state across all episodes
+    # returns = {key:list() for key in self.state_dict.keys()}
+    # # Holds the deltas in state value for every state across all episodes
+    # deltas = {key:list() for key in self.state_dict.keys()}
+    # # Holds the state values (initially 0 for all states)
+    # V = {key:0 for key in self.state_dict.keys()}
+
+    # for i in tqdm(range(num_episodes)):
+    #   self.generateEpisode(V, discount_factor, learning_rate, deltas)
+
+    # print("State Value function", V)
+    # print("\n")
+    # policy = self.getPolicyFromStateValueFunction(V)
+    # print('Policy', policy)
+    # # Plot change in deltas over iterations
+    # plt.figure(figsize=(20,10))
+    # all_series = [list(x)[:50] for x in deltas.values()]
+    # for series in all_series:
+    #   plt.plot(series)
+    # plt.show()
+    pass
+
+  def train_n_step_sarsa(self, n):
+    num_episodes = 1000
+    learning_rate = 0.1
+    discount_factor = 0.9
+    epsilon = 1
+    min_epsilon = 0.01
+    epsilon_decay_rate = 0.01
+    q_table = np.zeros((self.state_space_size, self.action_space_size))
+    max_steps_per_episode = 100
+    rewards_all_episodes = []
+
+    for episode in tqdm(range(num_episodes)):
+      self.env.reset()
+      rewards_current_episode = 0
+      t = 0
+      T = np.inf
+      state = self.getState()
+      action = self.chooseSarsaAction(q_table, state, epsilon)
+
+      actions = [action]
+      states = [state]
+      rewards = [0]
+      while True:
+        if t < T:
+          observation, reward, done, info = self.env.step(action)
+          state = self.getState()
+          states.append(state)
+          rewards.append(reward)
+          rewards_current_episode += reward
+
+          if state >= 32: # Done with game
+            T = t + 1
+          else:
+            action = self.chooseSarsaAction(q_table, state, epsilon)
+            actions.append(action)
+
+        tau = t - n + 1
+        if tau >= 0:
+          G = 0
+          for i in range(tau + 1, min(tau + n + 1, T + 1)):
+            G += np.power(discount_factor, i - tau - 1) * rewards[i]
+          if tau + n < T:
+            state_action = (states[tau], actions[tau])
+            q_table[state_action[0]][state_action[1]] += learning_rate * (
+              G - q_table[state_action[0]][state_action[1]])
+
+        if tau == T - 1:
+          break
+
+        t += 1
+
+      # Exponentially decay epsilon
+      epsilon = min_epsilon + \
+        (1 - min_epsilon) * np.exp(-epsilon_decay_rate*episode)
+      rewards_all_episodes.append(rewards_current_episode)
+
+    # Calculate and print the average reward per thousand episodes
+    rewards_per_thousand_episodes = np.split(np.array(rewards_all_episodes),num_episodes/1000)
+    count = 1000
+
+    print("\n********Average reward per thousand episodes********\n")
+    for r in rewards_per_thousand_episodes:
+        print(count, ": ", str(sum(r/1000)))
+        count += 1000
+
+    print("\n\n********Q-table********\n")
+    print(q_table)
+
   def test_q_learning(self):
     self.test(q_learning_table)
 

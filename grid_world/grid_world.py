@@ -88,7 +88,9 @@ td_agent = TemporalDifferenceAgent(env, state_dict, state_space_size, action_spa
 # td_agent.train_expected_sarsa()
 # td_agent.test_expected_sarsa()
 # td_agent.train_double_q_learning()
-td_agent.test_double_q_learning()
+# td_agent.test_double_q_learning()
+# td_agent.train_n_step_td(3)
+td_agent.train_n_step_sarsa(3)
 
 # value_choices = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 # parameters = []
