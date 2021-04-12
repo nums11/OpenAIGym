@@ -1,18 +1,17 @@
 import numpy as np
 from tqdm import tqdm
 import random
+from collections import Counter
 
 """
-State-space is just the player current sum and
-whether or not they have an ace
-State-space size: 42
+Adding the dealers hand to the state space
+State-space size: 400
 """
-class SimpleQLearningAgent:
+class AdvancedSarsaAgent:
 	def train(self, env, num_episodes):
 		state_space_size = 2
 		action_space_size = 2
 		# learning_rate = 0.1
-		# learning_rate = 0.05
 		learning_rate = 0.01
 		epsilon = 1
 		min_epsilon = 0.1
@@ -22,18 +21,19 @@ class SimpleQLearningAgent:
 		discount_rate = 1
 		q_table = {}
 		bool = False
-		for i in range(1,22):
-			q_table[(i,bool)] = np.zeros((action_space_size))
-			bool = not bool
-			q_table[(i,bool)] = np.zeros((action_space_size))
-			bool = not bool
+		for player_sum in range(1,22):
+			for dealer_sum in range(1, 11):
+				q_table[(player_sum, dealer_sum, bool)] = np.zeros((action_space_size))
+				bool = not bool
+				q_table[(player_sum, dealer_sum, bool)] = np.zeros((action_space_size))
+				bool = not bool
 
 		for episode in tqdm(range(num_episodes)):
 		  player_sum, dealer_sum, has_ace = env.reset()
 		  if player_sum == 21:
 		  	rewards_all_episodes.append(1)
 		  	continue
-		  state = (player_sum, has_ace)
+		  state = (player_sum, dealer_sum, has_ace)
 		  rewards_current_episode = 0
 
 		  while True:
@@ -46,15 +46,18 @@ class SimpleQLearningAgent:
 		    observation, reward, done, info = env.step(action)
 		    player_sum, dealer_sum, has_ace = observation
 
-		    new_state = (player_sum, has_ace)
+		    new_state = (player_sum, dealer_sum, has_ace)
 		    new_state_value = 0
 		    # Make sure the state is not terminal
 		    if new_state in q_table:
-		    	new_state_value = np.max(q_table[new_state])
+		    	next_action = random.randint(0,1)
+		    	new_state_value = q_table[new_state][next_action]
 
 		    # Update Q-table for Q(s,a)
-		    q_table[state][action] = q_table[state][action] * (1 - learning_rate) + \
-		      learning_rate * (reward + discount_rate * new_state_value)
+		    # q_table[state][action] = q_table[state][action] * (1 - learning_rate) + \
+		    #   learning_rate * (reward + discount_rate * new_state_value)
+		    q_table[state][action] = q_table[state][action] + learning_rate * (
+		      reward + discount_rate * new_state_value - q_table[state][action])
 
 		    rewards_current_episode += reward
 
@@ -67,13 +70,12 @@ class SimpleQLearningAgent:
 		  rewards_all_episodes.append(rewards_current_episode)
 
 		self.printRewards(num_episodes, rewards_all_episodes)
-		print("q_table", q_table)
+		# self.saveRewards(rewards_all_episodes)
 		policy = self.getPolicyFromQTable(q_table)
 		self.savePolicy(policy)
-		# self.saveRewards(rewards_all_episodes)
 
 	def printRewards(self, num_episodes, rewards):
-		split = 100000	# 100k
+		split = num_episodes / 10
 		rewards_per_split_episodes = np.split(np.array(rewards),num_episodes/split)
 		count = split
 
@@ -83,16 +85,16 @@ class SimpleQLearningAgent:
 		  count += split
 
 	def saveRewards(self, rewards):
-		with open('simple_rewards', 'w') as file_handler:
+		with open('advanced_rewards', 'w') as file_handler:
 		  for item in rewards:
 		    file_handler.write("{}\n".format(item))
+
+	def savePolicy(self, policy):
+	  np.save('policies/advanced_sarsa_policy.npy', policy)
 
 	def getPolicyFromQTable(self, q_table):
 	  policy = {key:np.argmax(action_values) for key, action_values in q_table.items()}
 	  return policy
-
-	def savePolicy(self, policy):
-	  np.save('simple_ql_policy.npy', policy)
 
 	def test(self, env, num_episodes, policy):
 	  env.reset()
@@ -107,7 +109,7 @@ class SimpleQLearningAgent:
 	      num_skipped += 1
 	      continue
 
-	    state = (player_sum, has_ace)
+	    state = (player_sum, dealer_sum, has_ace)
 	    done = False
 	    while True:
 	      if done:
@@ -116,12 +118,12 @@ class SimpleQLearningAgent:
 	      action = policy[state]
 	      observation, reward, done, info = env.step(action)
 	      player_sum, dealer_sum, has_ace = observation
-	      new_state = (player_sum,has_ace)
+	      new_state = (player_sum, dealer_sum, has_ace)
 	      state = new_state
 
-	  avg_rewards = sum(rewards_all_episodes) / num_episodes
-	  print(f'******* Average rewards across {num_episodes} episodes *******')
+	  avg_rewards = sum(rewards_all_episodes) / (num_episodes - num_skipped)
+	  print(f'******* Average rewards across {num_episodes} episodes ({num_skipped}) skipped *******')
 	  print(avg_rewards)
-
-
-
+	  counts = Counter(rewards_all_episodes)
+	  win_rate = (counts[1] / len(rewards_all_episodes)) * 100
+	  print(f'{win_rate}% win rate')

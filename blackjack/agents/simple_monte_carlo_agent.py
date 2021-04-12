@@ -2,6 +2,7 @@ import numpy as np
 from tqdm import tqdm
 import random
 import matplotlib.pyplot as plt
+from collections import Counter
 
 """
 State-space is just the player current sum and
@@ -12,12 +13,9 @@ class SimpleMonteCarloAgent:
   def train(self, env, num_episodes):
     state_space_size = 2
     action_space_size = 2
-    # learning_rate = 0.1
-    # learning_rate = 0.05
-    learning_rate = 0.01
     rewards_all_episodes = []
     # discount_rate = 0.99
-    discount_rate = 1
+    discount_rate = 0.95
     q_table = {}
     bool = False
     for i in range(1,22):
@@ -104,7 +102,7 @@ class SimpleMonteCarloAgent:
     return policy
 
   def savePolicy(self, policy):
-    np.save('policy.npy', policy)
+    np.save('simple_mc_policy_10k_disc_095.npy', policy)
 
   def test(self, env, num_episodes, policy):
     env.reset()
@@ -131,8 +129,10 @@ class SimpleMonteCarloAgent:
         new_state = (player_sum,has_ace)
         state = new_state
 
-    avg_rewards = sum(rewards_all_episodes) / num_episodes
-    print(f'******* Average rewards across {num_episodes} episodes *******')
+    avg_rewards = sum(rewards_all_episodes) / (num_episodes - num_skipped)
+    print(f'******* Average rewards across {num_episodes} episodes ({num_skipped}) skipped *******')
     print(avg_rewards)
-
+    counts = Counter(rewards_all_episodes)
+    win_rate = (counts[1] / len(rewards_all_episodes)) * 100
+    print(f'{win_rate}% win rate')
 

@@ -2,6 +2,7 @@ import numpy as np
 from tqdm import tqdm
 import random
 import matplotlib.pyplot as plt
+from collections import Counter
 
 """
 State space includes players sum, dealers sum,
@@ -132,8 +133,11 @@ class AdvancedMonteCarloAgent:
         new_state = (player_sum, dealer_sum, has_ace)
         state = new_state
 
-    avg_rewards = sum(rewards_all_episodes) / num_episodes
-    print(f'******* Average rewards across {num_episodes} episodes *******')
+    avg_rewards = sum(rewards_all_episodes) / (num_episodes - num_skipped)
+    print(f'******* Average rewards across {num_episodes} episodes ({num_skipped}) skipped *******')
     print(avg_rewards)
+    counts = Counter(rewards_all_episodes)
+    win_rate = (counts[1] / len(rewards_all_episodes)) * 100
+    print(f'{win_rate}% win rate')
 
 

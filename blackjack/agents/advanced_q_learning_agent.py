@@ -1,12 +1,13 @@
 import numpy as np
 from tqdm import tqdm
 import random
+from collections import Counter
 
 """
 Adding the dealers hand to the state space
 State-space size: 400
 """
-class AdvancedBlackjackAgent:
+class AdvancedQLearningjackAgent:
 	def train(self, env, num_episodes):
 		state_space_size = 2
 		action_space_size = 2
@@ -20,7 +21,7 @@ class AdvancedBlackjackAgent:
 		discount_rate = 1
 		q_table = {}
 		bool = False
-		for player_sum in range(1,21):
+		for player_sum in range(1,22):
 			for dealer_sum in range(1, 11):
 				q_table[(player_sum, dealer_sum, bool)] = np.zeros((action_space_size))
 				bool = not bool
@@ -52,8 +53,10 @@ class AdvancedBlackjackAgent:
 		    	new_state_value = np.max(q_table[new_state])
 
 		    # Update Q-table for Q(s,a)
-		    q_table[state][action] = q_table[state][action] * (1 - learning_rate) + \
-		      learning_rate * (reward + discount_rate * new_state_value)
+		    # q_table[state][action] = q_table[state][action] * (1 - learning_rate) + \
+		    #   learning_rate * (reward + discount_rate * new_state_value)
+		    q_table[state][action] = q_table[state][action] + learning_rate * (
+		      reward + discount_rate * new_state_value - q_table[state][action])
 
 		    rewards_current_episode += reward
 
@@ -65,8 +68,10 @@ class AdvancedBlackjackAgent:
 		    (1 - min_epsilon) * np.exp(-epsilon_decay_rate*episode)
 		  rewards_all_episodes.append(rewards_current_episode)
 
-		# self.printRewards(num_episodes, rewards_all_episodes)
-		self.saveRewards(rewards_all_episodes)
+		self.printRewards(num_episodes, rewards_all_episodes)
+		# self.saveRewards(rewards_all_episodes)
+		policy = self.getPolicyFromQTable(q_table)
+		self.savePolicy(policy)
 
 	def printRewards(self, num_episodes, rewards):
 		split = num_episodes / 10
@@ -83,5 +88,41 @@ class AdvancedBlackjackAgent:
 		  for item in rewards:
 		    file_handler.write("{}\n".format(item))
 
+	def savePolicy(self, policy):
+	  np.save('policies/advanced_ql_policy_three.npy', policy)
 
+	def getPolicyFromQTable(self, q_table):
+	  policy = {key:np.argmax(action_values) for key, action_values in q_table.items()}
+	  return policy
 
+	def test(self, env, num_episodes, policy):
+	  env.reset()
+	  done = False
+	  rewards_all_episodes = []
+
+	  num_skipped = 0
+	  for episode in tqdm(range(num_episodes)):
+	    player_sum, dealer_sum, has_ace = env.reset()
+	    # Special case - when you auto win
+	    if player_sum == 21:
+	      num_skipped += 1
+	      continue
+
+	    state = (player_sum, dealer_sum, has_ace)
+	    done = False
+	    while True:
+	      if done:
+	        rewards_all_episodes.append(reward)
+	        break
+	      action = policy[state]
+	      observation, reward, done, info = env.step(action)
+	      player_sum, dealer_sum, has_ace = observation
+	      new_state = (player_sum, dealer_sum, has_ace)
+	      state = new_state
+
+	  avg_rewards = sum(rewards_all_episodes) / (num_episodes - num_skipped)
+	  print(f'******* Average rewards across {num_episodes} episodes ({num_skipped}) skipped *******')
+	  print(avg_rewards)
+	  counts = Counter(rewards_all_episodes)
+	  win_rate = (counts[1] / len(rewards_all_episodes)) * 100
+	  print(f'{win_rate}% win rate')

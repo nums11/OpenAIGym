@@ -4,13 +4,15 @@ import random
 import time
 from IPython.display import clear_output
 from gym.utils.play import play
+from tqdm import tqdm
+from collections import Counter
 from q_table import q_table
 q_table = np.array(q_table)
 
 env = gym.make("FrozenLake-v0")
-env.reset()
-print(env.step(2))
-env.render()
+# env.reset()
+# print(env.step(2))
+# env.render()
 action_space_size = env.action_space.n
 state_space_size = env.observation_space.n
 
@@ -65,7 +67,13 @@ def train():
   print("\n\n********Q-table********\n")
   print(q_table)
 
-def test():
+def getPolicyFromQTable(q_table):
+  policy = {}
+  for i in range(len(q_table)):
+    policy[i] = np.argmax(q_table[i])
+  return policy
+
+def testVisual():
   for episode in range(3):
     state = env.reset()
     done = False
@@ -92,6 +100,34 @@ def test():
 
   env.close()
 
+def test(num_episodes, policy):
+  done = False
+  rewards_all_episodes = []
+
+  for episode in tqdm(range(num_episodes)):
+    state = env.reset()
+    done = False
+    rewards_current_episode = 0
+
+    while True:
+      if done:
+        rewards_all_episodes.append(rewards_current_episode)
+        break
+      action = policy[state]
+      new_state, reward, done, info = env.step(action)
+      rewards_current_episode += reward
+      state = new_state
+
+  avg_rewards = sum(rewards_all_episodes) / num_episodes
+  print(f'******* Average rewards across {num_episodes} episodes *******')
+  print(avg_rewards)
+  counts = Counter(rewards_all_episodes)
+  win_rate = (counts[1] / len(rewards_all_episodes)) * 100
+  print(f'{win_rate}% win rate')
+
+
 # train()
-# test()
+# testVisual()
+policy = getPolicyFromQTable(q_table)
+test(100000, policy)
 
